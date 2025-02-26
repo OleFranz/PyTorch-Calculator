@@ -14,6 +14,9 @@ My goal is to recreate the Python PyTorch-Calculator app in C++, i never used C+
   - Install OpenCV
   - Create an environment variable named `OpenCV_DIR` and set its value to the path of the OpenCV folder, which contains folders like `bin`, `x64`, `include`, etc.
   - Add the absolute path of the `/x64/*/bin` folder (where `*` is for example `vc14`, `vc15`, `vc16`, etc.) in the `OpenCV_DIR` to the system PATH
+- Get [SFML](https://www.sfml-dev.org/download/)
+  - Unzip SFML
+  - Create an environment variable named `SFML_DIR` and set its value to the path of the SFML folder, which contains folders like `lib`, `bin`, `include`, etc.
 - Get [CMake](https://cmake.org/)
   - Install CMake (select the option to add it to the system PATH)
 - Build the app in release mode

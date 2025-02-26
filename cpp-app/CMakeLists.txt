@@ -15,6 +15,7 @@ project("cpp-app")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 
+find_package(SFML REQUIRED Graphics)
 find_package(Torch REQUIRED)
 find_package(OpenCV REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
@@ -22,7 +23,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 file(GLOB_RECURSE SRC_FILES "src/*.cpp" "src/*.h")
 
 add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PROJECT_NAME}.h ${SRC_FILES})
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${OpenCV_LIBS} SFML::Graphics)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 if (MSVC)
@@ -37,6 +38,12 @@ if (MSVC)
                        POST_BUILD
                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
                        ${OPENCV_DLLS}
+                       $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+    file(GLOB SFML_DLLS "${SFML_DIR}/../../../bin/*.dll")
+    add_custom_command(TARGET ${PROJECT_NAME}
+                       POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                       ${SFML_DLLS}
                        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
 endif (MSVC)
 

@@ -10,7 +10,8 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe",
-                "OpenCV_DIR": "$env{OpenCV_DIR}"
+                "OpenCV_DIR": "$env{OpenCV_DIR}",
+                "SFML_DIR": "$env{SFML_DIR}"
             },
             "condition": {
                 "type": "equals",
