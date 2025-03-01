@@ -26,6 +26,17 @@ int main() {
     auto Window = sf::RenderWindow(sf::VideoMode({700, 400}), "SFML Window");
     Window.setFramerateLimit(60);
 
+	sf::Font Font;
+    if (!Font.openFromFile("fonts/font.ttf")) {
+        std::cerr << "Could not load font!" << std::endl;
+        return 1;
+    }
+    sf::Text Label(Font);
+    Label.setString("Hello, SFML!");
+    Label.setCharacterSize(13);
+	Label.setFillColor(sf::Color({255, 255, 255}));
+    Label.setPosition(sf::Vector2f({30, 30}));
+
     while (Window.isOpen()) {
         while (const std::optional Event = Window.pollEvent()) {
             if (Event->is<sf::Event::Closed>()) {
@@ -33,11 +44,12 @@ int main() {
             }
         }
 
-        // Custom OpenCV UI
 		UI::Example();
 
-        Window.clear();
+		Window.draw(Label);
+
         Window.display();
+        Window.clear();
     }
 
 	if (Variables::BUILD_TYPE == "Release") {

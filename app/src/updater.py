@@ -3,10 +3,10 @@ import src.variables as variables
 import src.settings as settings
 import src.ui as ui
 
+import subprocess
 import traceback
 import requests
 import time
-import os
 
 def CheckForUpdates():
     try:
@@ -44,12 +44,7 @@ def Update():
             ui.SetTitleBarHeight(50)
             variables.PAGE = "Menu"
             return
-        try:
-            os.chdir(variables.PATH)
-            os.system("git stash >nul 2>&1")
-            os.system("git pull >nul 2>&1")
-        except:
-            pass
-        ui.Restart()
+        ui.Close()
+        subprocess.Popen(f"{variables.PATH}Update.bat", cwd=variables.PATH, creationflags=subprocess.CREATE_NEW_CONSOLE)
     except:
         CrashReport("Updater - Error in function Update.", str(traceback.format_exc()))

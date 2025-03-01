@@ -11,6 +11,7 @@
 /config/settings.json
 
 # Ignore the C++ app builds and VS files
+/cpp-app/fonts
 /cpp-app/build
 /cpp-app/.vscode
 /cpp-app/.vs

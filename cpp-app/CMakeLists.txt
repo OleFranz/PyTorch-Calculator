@@ -24,7 +24,7 @@ file(GLOB_RECURSE SRC_FILES "src/*.cpp" "src/*.h")
 
 add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${PROJECT_NAME}.h ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} ${OpenCV_LIBS} SFML::Graphics)
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
 
 if (MSVC)
     file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
@@ -46,7 +46,3 @@ if (MSVC)
                        ${SFML_DLLS}
                        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
 endif (MSVC)
-
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-    set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-endif()

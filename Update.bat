@@ -17,7 +17,11 @@ if not exist "%cd%\python" (
 
 echo Updating App...
 
-python  -c "import subprocess; import time; time.sleep(0.5); subprocess.Popen(['python', 'app/update.py'])"
+python -c "import time; time.sleep(3)"
+
+python app/update.py
+
+python -m pip install -r config/requirements.txt
 
 echo.
 echo App Updated
