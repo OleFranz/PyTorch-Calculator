@@ -6,12 +6,13 @@ import src.ui as ui
 import subprocess
 import traceback
 import requests
+import ImageUI
 import time
+
 
 def CheckForUpdates():
     try:
-        if variables.DEVMODE:
-            variables.POPUP = ["Ignoring update check because of development mode.", 0, 0.65]
+        if variables.DevelopmentMode:
             return
         if settings.Get("Updater", "LastRemoteCheck", 0) + 600 < time.time():
             try:
@@ -27,24 +28,20 @@ def CheckForUpdates():
         else:
             RemoteVersion = settings.Get("Updater", "RemoteVersion")
             Changelog = settings.Get("Updater", "Changelog")
-        variables.REMOTE_VERSION = RemoteVersion
-        variables.CHANGELOG = Changelog
-        if RemoteVersion != variables.VERSION:
-            variables.PAGE = "Update"
-            ui.SetTitleBarHeight(0)
-        else:
-            variables.POPUP = ["No updates available.", 0, 0.5]
+        variables.RemoteVersion = RemoteVersion
+        variables.Changelog = Changelog
+        if RemoteVersion != variables.Version:
+            variables.Page = "Update"
     except:
         CrashReport("Updater - Error in function CheckForUpdates.", str(traceback.format_exc()))
 
+
 def Update():
     try:
-        if variables.DEVMODE:
-            variables.POPUP = ["Ignoring update request because of development mode.", 0, 0.65]
-            ui.SetTitleBarHeight(50)
-            variables.PAGE = "Menu"
+        if variables.DevelopmentMode:
+            variables.Page = "Canvas"
             return
         ui.Close()
-        subprocess.Popen(f"{variables.PATH}Update.bat", cwd=variables.PATH, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        subprocess.Popen(f"{variables.Path}Update.bat", cwd=variables.Path, creationflags=subprocess.CREATE_NEW_CONSOLE)
     except:
         CrashReport("Updater - Error in function Update.", str(traceback.format_exc()))

@@ -13,58 +13,58 @@ def Update():
         global LastContent
         global Frame
 
-        Content = (len(variables.CANVAS_CONTENT),
-                        variables.CANVAS_POSITION,
-                        variables.CANVAS_ZOOM,
-                        variables.CANVAS_SHOW_GRID,
-                        variables.CANVAS_LINE_GRID,
-                        len(variables.CANVAS_TEMP),
-                        len(variables.CANVAS_DELETE_LIST),
-                        variables.DRAW_COLOR)
+        Content = (len(variables.CanvasContent),
+                   variables.CanvasPosition,
+                   variables.CanvasZoom,
+                   variables.CanvasShowGrid,
+                   variables.CanvasLineGrid,
+                   len(variables.CanvasTemp),
+                   len(variables.CanvasDeleteList),
+                   variables.Theme)
 
-        if variables.PAGE == "Canvas" and LastContent != Content:
-            if variables.CANVAS.shape != (variables.CANVAS_BOTTOM + 1, variables.WIDTH, 3):
-                variables.CANVAS = numpy.zeros((variables.CANVAS_BOTTOM + 1, variables.WIDTH, 3), numpy.uint8)
-                variables.CANVAS[:] = ((250, 250, 250) if variables.THEME == "Light" else (28, 28, 28))
-            Frame = variables.CANVAS.copy()
-            CANVAS_CONTENT = variables.CANVAS_CONTENT
-            CANVAS_POSITION = variables.CANVAS_POSITION
-            CANVAS_ZOOM = variables.CANVAS_ZOOM
-            if variables.CANVAS_SHOW_GRID == True:
+        if variables.Page == "Canvas" and LastContent != Content:
+            if variables.Canvas.shape != (variables.WindowHeight - 50, variables.WindowWidth, 3):
+                variables.Canvas = numpy.zeros((variables.WindowHeight - 50, variables.WindowWidth, 3), numpy.uint8)
+                variables.Canvas[:] = ((250, 250, 250) if variables.Theme == "Light" else (28, 28, 28))
+            Frame = variables.Canvas.copy()
+            CANVAS_CONTENT = variables.CanvasContent
+            CANVAS_POSITION = variables.CanvasPosition
+            CANVAS_ZOOM = variables.CanvasZoom
+            if variables.CanvasShowGrid == True:
                 GridSize = 50
                 GridWidth = math.ceil(Frame.shape[1] / (GridSize * CANVAS_ZOOM))
                 GridHeight = math.ceil(Frame.shape[0] / (GridSize * CANVAS_ZOOM))
                 if CANVAS_ZOOM > 0.05:
-                    if variables.CANVAS_LINE_GRID == True:
+                    if variables.CanvasLineGrid == True:
                         for X in range(0, GridWidth):
                             PointX = round((X * GridSize + CANVAS_POSITION[0] / CANVAS_ZOOM % GridSize) * CANVAS_ZOOM)
-                            cv2.line(Frame, (PointX, 0), (PointX, Frame.shape[0]), (127, 127, 127), 1, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                            cv2.line(Frame, (PointX, 0), (PointX, Frame.shape[0]), (127, 127, 127), 1, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
                         for Y in range(0, GridHeight):
                             PointY = round((Y * GridSize + CANVAS_POSITION[1] / CANVAS_ZOOM % GridSize) * CANVAS_ZOOM)
-                            cv2.line(Frame, (0, PointY), (Frame.shape[1], PointY), (127, 127, 127), 1, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                            cv2.line(Frame, (0, PointY), (Frame.shape[1], PointY), (127, 127, 127), 1, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
                     else:
                         for X in range(0, GridWidth):
                             PointX = round((X * GridSize + CANVAS_POSITION[0] / CANVAS_ZOOM % GridSize) * CANVAS_ZOOM)
                             for Y in range(0, GridHeight):
                                 PointY = round((Y * GridSize + CANVAS_POSITION[1] / CANVAS_ZOOM % GridSize) * CANVAS_ZOOM)
-                                cv2.circle(Frame, (PointX, PointY), 1, (127, 127, 127), -1, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                                cv2.circle(Frame, (PointX, PointY), 1, (127, 127, 127), -1, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
 
             LastPoint = None
-            for X, Y in variables.CANVAS_TEMP:
+            for X, Y in variables.CanvasTemp:
                 if LastPoint != None:
                     PointX1 = round((LastPoint[0] + CANVAS_POSITION[0] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                     PointY1 = round((LastPoint[1] + CANVAS_POSITION[1] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                     PointX2 = round((X + CANVAS_POSITION[0] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                     PointY2 = round((Y + CANVAS_POSITION[1] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                     if 0 <= PointX1 < Frame.shape[1] or 0 <= PointY1 < Frame.shape[0] or 0 <= PointX2 < Frame.shape[1] or 0 <= PointY2 < Frame.shape[0]:
-                        cv2.line(Frame, (PointX1, PointY1), (PointX2, PointY2), variables.DRAW_COLOR, 3, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                        cv2.line(Frame, (PointX1, PointY1), (PointX2, PointY2), variables.DrawColor, 3, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
                 LastPoint = (X, Y)
 
-            if len(variables.CANVAS_TEMP) == 1:
-                PointX = round((variables.CANVAS_TEMP[0][0] + CANVAS_POSITION[0] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
-                PointY = round((variables.CANVAS_TEMP[0][1] + CANVAS_POSITION[1] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
+            if len(variables.CanvasTemp) == 1:
+                PointX = round((variables.CanvasTemp[0][0] + CANVAS_POSITION[0] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
+                PointY = round((variables.CanvasTemp[0][1] + CANVAS_POSITION[1] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                 if 0 <= PointX < Frame.shape[1] or 0 <= PointY < Frame.shape[0]:
-                    cv2.circle(Frame, (PointX, PointY), 3, variables.DRAW_COLOR, -1, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                    cv2.circle(Frame, (PointX, PointY), 3, variables.DrawColor, -1, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
             for i in CANVAS_CONTENT:
                 LastPoint = None
                 MinX, MinY, MaxX, MaxY = i[0]
@@ -82,15 +82,14 @@ def Update():
                             PointX2 = round((X + CANVAS_POSITION[0] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                             PointY2 = round((Y + CANVAS_POSITION[1] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                             if 0 <= PointX1 < Frame.shape[1] or 0 <= PointY1 < Frame.shape[0] or 0 <= PointX2 < Frame.shape[1] or 0 <= PointY2 < Frame.shape[0]:
-                                cv2.line(Frame, (PointX1, PointY1), (PointX2, PointY2), variables.DRAW_COLOR, 3, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                                cv2.line(Frame, (PointX1, PointY1), (PointX2, PointY2), variables.DrawColor, 3, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
                         LastPoint = (X, Y)
                     if len(i) == 1:
                         PointX = round((i[0][0] + CANVAS_POSITION[0] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                         PointY = round((i[0][1] + CANVAS_POSITION[1] * 1/CANVAS_ZOOM) * CANVAS_ZOOM)
                         if 0 <= PointX < Frame.shape[1] or 0 <= PointY < Frame.shape[0]:
-                            cv2.circle(Frame, (PointX, PointY), 3, variables.DRAW_COLOR, -1, cv2.LINE_AA if variables.ANTI_ALIASING_LINES == True else cv2.LINE_8)
+                            cv2.circle(Frame, (PointX, PointY), 3, variables.DrawColor, -1, cv2.LINE_AA if variables.AntiAliasedLines == True else cv2.LINE_8)
 
-            variables.CANVAS_CHANGED = True
             LastContent = Content
     except:
         CrashReport("Canvas - Error in function Update.", str(traceback.format_exc()))

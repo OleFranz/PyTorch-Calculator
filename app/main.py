@@ -4,7 +4,6 @@ sys.path.append(os.path.dirname(__file__))
 os.system("cls" if os.name == "nt" else "clear")
 print("\nPyTorch-Calculator\n------------------\n")
 
-import src.translate as translate
 import src.variables as variables
 import src.keyboard as keyboard
 import src.settings as settings
@@ -22,18 +21,17 @@ import sys
 
 for Argument in sys.argv:
     if "--dev" in Argument.lower():
-        variables.DEVMODE = True
+        variables.DevelopmentMode = True
     elif os.path.exists(Argument) and Argument.lower().endswith(".txt"):
         file.Open(Argument)
 
-if os.path.exists(f"{variables.PATH}cache") == False:
-    os.makedirs(f"{variables.PATH}cache")
+if os.path.exists(f"{variables.Path}cache") == False:
+    os.makedirs(f"{variables.Path}cache")
 
 if settings.Get("Console", "HideConsole", False):
     console.HideConsole()
 
-translate.Initialize()
-#pytorch.CheckCuda()
+pytorch.CheckCUDA()
 ui.Initialize()
 analyze.Initialize()
 updater.CheckForUpdates()
@@ -41,12 +39,12 @@ updater.CheckForUpdates()
 mouse.Run()
 keyboard.Run()
 
-if variables.DEVMODE:
+if variables.DevelopmentMode:
     import hashlib
     Scripts = []
-    Scripts.append(("Main", f"{variables.PATH}app/main.py"))
-    for Object in os.listdir(f"{variables.PATH}app/src"):
-        Scripts.append((Object, f"{variables.PATH}app/src/{Object}"))
+    Scripts.append(("Main", f"{variables.Path}app/main.py"))
+    for Object in os.listdir(f"{variables.Path}app/src"):
+        Scripts.append((Object, f"{variables.Path}app/src/{Object}"))
     LastScripts = {}
     for i, (Script, Path) in enumerate(Scripts):
         try:
@@ -55,10 +53,10 @@ if variables.DEVMODE:
         except:
             pass
 
-while variables.BREAK == False:
+while variables.Break == False:
     Start = time.time()
 
-    if variables.DEVMODE:
+    if variables.DevelopmentMode:
         for i, (Script, Path) in enumerate(Scripts):
             try:
                 Hash = hashlib.md5(open(Path, "rb").read()).hexdigest()
@@ -75,13 +73,10 @@ while variables.BREAK == False:
 
     ui.Update()
 
-    TimeToSleep = 1/variables.FPS - (time.time() - Start)
+    TimeToSleep = 1/60 - (time.time() - Start)
     if TimeToSleep > 0:
         time.sleep(TimeToSleep)
 
 if settings.Get("Console", "HideConsole", False):
     console.RestoreConsole()
     console.CloseConsole()
-
-if variables.DEFAULT_MOUSE_SPEED != None:
-    mouse.SetMouseSpeed(variables.DEFAULT_MOUSE_SPEED)

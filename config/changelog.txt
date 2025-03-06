@@ -1,1 +1,1 @@
-Improvements in the installer and updater.
+UI Rewrite.

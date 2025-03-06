@@ -7,6 +7,8 @@ echo PyTorch-Calculator Installer
 echo ----------------------------
 echo.
 
+cd /d %~dp0
+
 
 if exist "%cd%\python" (
     echo PyTorch-Calculator is already installed, press enter to reinstall!

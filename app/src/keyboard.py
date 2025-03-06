@@ -16,10 +16,10 @@ def Run():
                 LastCtrlZClicked, LastCtrlYClicked = False, False
                 LastCtrlSClicked, LastCtrlNClicked = False, False
                 LastCtrlCClicked, LastCtrlVClicked, LastCtrlXClicked, LastCtrlDClicked = False, False, False, False
-                while variables.BREAK == False:
+                while variables.Break == False:
                     Start = time.time()
 
-                    if SimpleWindow.GetForeground(variables.NAME) == False or variables.PAGE != "Canvas":
+                    if SimpleWindow.GetForeground(variables.Name) == False or variables.Page != "Canvas":
                         time.sleep(0.1)
                         continue
 
@@ -33,16 +33,14 @@ def Run():
                     CtrlDClicked = ctypes.windll.user32.GetKeyState(0x44) & 0x8000 != 0
 
                     if CtrlZClicked == True and LastCtrlZClicked == False:
-                        if len(variables.CANVAS_CONTENT) > 0:
-                            variables.CANVAS_DELETE_LIST.append(variables.CANVAS_CONTENT[-1])
-                            variables.CANVAS_CONTENT.pop()
-                        variables.RENDER_FRAME = True
+                        if len(variables.CanvasContent) > 0:
+                            variables.CanvasDeleteList.append(variables.CanvasContent[-1])
+                            variables.CanvasContent.pop()
 
                     if CtrlYClicked == True and LastCtrlYClicked == False:
-                        if len(variables.CANVAS_DELETE_LIST) > 0:
-                            variables.CANVAS_CONTENT.append(variables.CANVAS_DELETE_LIST[-1])
-                            variables.CANVAS_DELETE_LIST.pop()
-                        variables.RENDER_FRAME = True
+                        if len(variables.CanvasDeleteList) > 0:
+                            variables.CanvasContent.append(variables.CanvasDeleteList[-1])
+                            variables.CanvasDeleteList.pop()
 
                     LastCtrlZClicked = CtrlZClicked
                     LastCtrlYClicked = CtrlYClicked
@@ -53,7 +51,7 @@ def Run():
                     LastCtrlXClicked = CtrlXClicked
                     LastCtrlDClicked = CtrlDClicked
 
-                    TimeToSleep = 1/variables.FPS - (time.time() - Start)
+                    TimeToSleep = 1/60 - (time.time() - Start)
                     if TimeToSleep > 0:
                         time.sleep(TimeToSleep)
             except:

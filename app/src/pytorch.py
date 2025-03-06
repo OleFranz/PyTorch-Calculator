@@ -8,15 +8,18 @@ import subprocess
 import threading
 import traceback
 import requests
+import ImageUI
 import GPUtil
 import psutil
 import torch
 import time
+import sys
 import os
 
 RED = "\033[91m"
 GREEN = "\033[92m"
-DARK_GREY = "\033[90m"
+GRAY = "\033[90m"
+YELLOW = "\033[93m"
 NORMAL = "\033[0m"
 
 try:
@@ -25,31 +28,35 @@ try:
     TorchAvailable = True
 except:
     TorchAvailable = False
-    exc = traceback.format_exc()
-    CrashReport("PyTorch - PyTorch import error.", str(exc))
+    CrashReport("PyTorch - PyTorch import error.", str(traceback.format_exc()))
 
 MODELS = {}
 
-def Initialize(Owner="", Model="", Threaded=True):
-    try:
-        MODELS[Model] = {}
-        MODELS[Model]["Device"] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        MODELS[Model]["Path"] = f"{variables.PATH}cache/{Model}"
-        MODELS[Model]["Threaded"] = Threaded
-        MODELS[Model]["ModelOwner"] = str(Owner)
-    except:
-        CrashReport("PyTorch - Error in function Initialize.", str(traceback.format_exc()))
+def Initialize(Owner="", Model="", Folder="", Threaded=True):
+    Identifier = f"{Model}/{Folder}"
+    MODELS[Identifier] = {}
+    MODELS[Identifier]["Device"] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    MODELS[Identifier]["Path"] = f"{variables.Path}cache/{Identifier}"
+    MODELS[Identifier]["Threaded"] = Threaded
+    MODELS[Identifier]["ModelOwner"] = str(Owner)
+    MODELS[Identifier]["UpdateThread"] = None
+    MODELS[Identifier]["LoadThread"] = None
+    return Identifier
+
+
+def Popup(Text="", Progress=0):
+    ui.Popup(Text=Text, Progress=Progress)
 
 
 def InstallCUDA():
     try:
         def InstallCUDAThread():
             try:
-                Command = ["cmd", "/c", f"{variables.PATH}python/python.exe -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124 --progress-bar raw --force-reinstall"]
-                Process = subprocess.Popen(Command, cwd=variables.PATH, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                with open(LOCK_FILE_PATH, "w") as f:
-                    f.write(str(Process.pid))
-                    f.close()
+                Command = ["cmd", "/c", f"{variables.Path}python/python.exe -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124 --progress-bar raw --force-reinstall"]
+                Process = subprocess.Popen(Command, cwd=variables.Path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                with open(LockFilePath, "w") as File:
+                    File.write(str(Process.pid))
+                    File.close()
                 while psutil.pid_exists(Process.pid):
                     time.sleep(0.1)
                     Output = Process.stdout.readline()
@@ -58,27 +65,28 @@ def InstallCUDA():
                         TotalSize = Output[1]
                         DownloadedSize = Output[0]
                         try:
-                            variables.POPUP = [f"Installing CUDA: {round((int(DownloadedSize) / int(TotalSize)) * 100)}%", (int(DownloadedSize) / int(TotalSize)) * 100, 0.5]
+                            Popup(Text=f"Installing CUDA: {round((int(DownloadedSize) / int(TotalSize)) * 100)}%", Progress=(int(DownloadedSize) / int(TotalSize)) * 100)
                         except:
-                            variables.POPUP = [f"Installing CUDA...", -1, 0.5]
+                            Popup(Text="Installing CUDA...", Progress=-1)
                     else:
-                        variables.POPUP = [f"Installing CUDA...", -1, 0.5]
-                if os.path.exists(LOCK_FILE_PATH):
-                    os.remove(LOCK_FILE_PATH)
+                        Popup(Text="Installing CUDA...", Progress=-1)
+                if os.path.exists(LockFilePath):
+                    os.remove(LockFilePath)
                 print(GREEN + "CUDA installation completed." + NORMAL)
-                variables.POPUP = [f"CUDA installation completed.", 0, 0.5]
+                Popup(Text="CUDA installation completed.", Progress=0)
                 ui.Restart()
             except:
                 CrashReport("PyTorch - Error in function InstallCUDAThread.", str(traceback.format_exc()))
         print(GREEN + "Installing CUDA..." + NORMAL)
-        variables.POPUP = [f"Installing CUDA...", 0, 0.5]
-        LOCK_FILE_PATH = f"{variables.PATH}cache/CUDAInstall.txt"
-        if os.path.exists(LOCK_FILE_PATH):
-            with open(LOCK_FILE_PATH, "r") as f:
-                PID = int(f.read().strip())
-                f.close()
+        Popup(Text="Installing CUDA...", Progress=-1)
+        LockFilePath = f"{variables.Path}cache/CUDAInstall.txt"
+        if os.path.exists(LockFilePath):
+            with open(LockFilePath, "r") as File:
+                PID = int(File.read().strip())
+                File.close()
             if str(PID) in str(psutil.pids()):
                 print(RED + "CUDA is already being installed." + NORMAL)
+                Popup(Text="CUDA is already being installed.", Progress=0)
                 return
         threading.Thread(target=InstallCUDAThread, daemon=True).start()
     except:
@@ -89,11 +97,11 @@ def UninstallCUDA():
     try:
         def UninstallCUDAThread():
             try:
-                Command = ["cmd", "/c", f"{variables.PATH}python/python.exe -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --progress-bar raw --force-reinstall"]
-                Process = subprocess.Popen(Command, cwd=variables.PATH, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                with open(LOCK_FILE_PATH, "w") as f:
-                    f.write(str(Process.pid))
-                    f.close()
+                Command = ["cmd", "/c", f"{variables.Path}python/python.exe -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --progress-bar raw --force-reinstall"]
+                Process = subprocess.Popen(Command, cwd=variables.Path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                with open(LockFilePath, "w") as File:
+                    File.write(str(Process.pid))
+                    File.close()
                 while psutil.pid_exists(Process.pid):
                     time.sleep(0.1)
                     Output = Process.stdout.readline()
@@ -102,256 +110,264 @@ def UninstallCUDA():
                         TotalSize = Output[1]
                         DownloadedSize = Output[0]
                         try:
-                            variables.POPUP = [f"Uninstalling CUDA: {round((int(DownloadedSize) / int(TotalSize)) * 100)}%", (int(DownloadedSize) / int(TotalSize)) * 100, 0.5]
+                            Popup(Text=f"Uninstalling CUDA: {round((int(DownloadedSize) / int(TotalSize)) * 100)}%", Progress=(int(DownloadedSize) / int(TotalSize)) * 100)
                         except:
-                            variables.POPUP = [f"Uninstalling CUDA...", -1, 0.5]
+                            Popup(Text="Uninstalling CUDA...", Progress=-1)
                     else:
-                        variables.POPUP = [f"Uninstalling CUDA...", -1, 0.5]
-                if os.path.exists(LOCK_FILE_PATH):
-                    os.remove(LOCK_FILE_PATH)
+                        Popup(Text="Uninstalling CUDA...", Progress=-1)
+                if os.path.exists(LockFilePath):
+                    os.remove(LockFilePath)
                 print(GREEN + "CUDA uninstallation completed." + NORMAL)
-                variables.POPUP = [f"CUDA uninstallation completed.", 0, 0.5]
+                Popup(Text="CUDA uninstallation completed.", Progress=0)
                 ui.Restart()
             except:
                 CrashReport("PyTorch - Error in function UninstallCUDAThread.", str(traceback.format_exc()))
         print(GREEN + "Uninstalling CUDA..." + NORMAL)
-        variables.POPUP = [f"Uninstalling CUDA...", 0, 0.5]
-        LOCK_FILE_PATH = f"{variables.PATH}cache/CUDAInstall.txt"
-        if os.path.exists(LOCK_FILE_PATH):
-            with open(LOCK_FILE_PATH, "r") as f:
-                PID = int(f.read().strip())
-                f.close()
+        Popup(Text="Uninstalling CUDA...", Progress=-1)
+        LockFilePath = f"{variables.Path}cache/CUDAInstall.txt"
+        if os.path.exists(LockFilePath):
+            with open(LockFilePath, "r") as File:
+                PID = int(File.read().strip())
+                File.close()
             if str(PID) in str(psutil.pids()):
                 print(RED + "CUDA is already being uninstalled." + NORMAL)
+                Popup(Text="CUDA is already being uninstalled.", Progress=0)
                 return
         threading.Thread(target=UninstallCUDAThread, daemon=True).start()
     except:
         CrashReport("PyTorch - Error in function UninstallCUDA.", str(traceback.format_exc()))
 
 
-def CheckCuda():
+def CheckCUDA():
     try:
-        variables.CUDA_INSTALLED = "Loading..."
-        variables.CUDA_AVAILABLE = "Loading..."
-        variables.CUDA_COMPATIBLE = "Loading..."
-        variables.CUDA_DETAILS = "Loading..."
-        def CheckCudaThread():
+        variables.CUDAInstalled = "Loading..."
+        variables.CUDAAvailable = "Loading..."
+        variables.CUDACompatible = "Loading..."
+        variables.CUDADetails = "Loading..."
+        def CheckCUDAThread():
             try:
-                Result = subprocess.run(f"{variables.PATH}python/python.exe -m pip list", shell=True, capture_output=True, text=True)
+                Result = subprocess.run(f"{variables.Path}python/python.exe -m pip list", shell=True, capture_output=True, text=True)
                 Modules = Result.stdout
-                CUDA_INSTALLED = True
-                PYTORCH_MODULES = []
+                CUDAInstalled = True
+                PyTorchModules = []
                 for Module in Modules.splitlines():
                     if "torch " in Module:
-                        PYTORCH_MODULES.append(Module)
+                        PyTorchModules.append(Module)
                         if "cu" not in Module:
-                            CUDA_INSTALLED = False
+                            CUDAInstalled = False
                     elif "torchvision " in Module:
-                        PYTORCH_MODULES.append(Module)
+                        PyTorchModules.append(Module)
                         if "cu" not in Module:
-                            CUDA_INSTALLED = False
+                            CUDAInstalled = False
                     elif "torchaudio " in Module:
-                        PYTORCH_MODULES.append(Module)
+                        PyTorchModules.append(Module)
                         if "cu" not in Module:
-                            CUDA_INSTALLED = False
+                            CUDAInstalled = False
                 GPUS = [str(GPU.name) for GPU in GPUtil.getGPUs()]
-                variables.CUDA_INSTALLED = CUDA_INSTALLED
-                variables.CUDA_AVAILABLE = torch.cuda.is_available()
-                variables.CUDA_COMPATIBLE = ("nvidia" in str([GPU.lower() for GPU in GPUS]))
-                variables.CUDA_DETAILS = "\n".join(PYTORCH_MODULES) + "\n" + "\n".join([str(GPU.name).upper() for GPU in GPUtil.getGPUs()] if len(GPUS) > 0 else ["No GPUs found."])
-                variables.RENDER_FRAME = True
-                if variables.CUDA_INSTALLED == False and variables.CUDA_COMPATIBLE == True:
-                    variables.PAGE = "CUDA"
+                variables.CUDAInstalled = CUDAInstalled
+                variables.CUDAAvailable = torch.cuda.is_available()
+                variables.CUDACompatible = ("nvidia" in str([GPU.lower() for GPU in GPUS]))
+                variables.CUDADetails = "\n".join(PyTorchModules) + "\n" + "\n".join([str(GPU.name).upper() for GPU in GPUtil.getGPUs()] if len(GPUS) > 0 else ["No GPUs found."])
             except:
-                CrashReport("PyTorch - Error in function CheckCudaThread.", str(traceback.format_exc()))
-        threading.Thread(target=CheckCudaThread, daemon=True).start()
+                CrashReport("PyTorch - Error in function CheckCUDAThread.", str(traceback.format_exc()))
+        threading.Thread(target=CheckCUDAThread, daemon=True).start()
     except:
-        CrashReport("PyTorch - Error in function CheckCuda.", str(traceback.format_exc()))
+        CrashReport("PyTorch - Error in function CheckCUDA.", str(traceback.format_exc()))
 
 
-def Loaded(Model="All"):
-    try:
-        if Model == "All":
-            for Model in MODELS:
-                if MODELS[Model]["Threaded"] == True:
-                    if MODELS[Model]["UpdateThread"].is_alive(): return False
-                    if MODELS[Model]["LoadThread"].is_alive(): return False
-        else:
+def Loaded(Identifier="All"):
+    if Identifier == "All":
+        for Model in MODELS:
             if MODELS[Model]["Threaded"] == True:
+                if MODELS[Model]["UpdateThread"] == None: return False
                 if MODELS[Model]["UpdateThread"].is_alive(): return False
+                if MODELS[Model]["LoadThread"] == None: return False
                 if MODELS[Model]["LoadThread"].is_alive(): return False
-        return True
-    except:
-        CrashReport("PyTorch - Error in function Loaded.", str(traceback.format_exc()))
-        return False
+    else:
+        if MODELS[Identifier]["Threaded"] == True:
+            if MODELS[Identifier]["UpdateThread"] == None: return False
+            if MODELS[Identifier]["UpdateThread"].is_alive(): return False
+            if MODELS[Identifier]["LoadThread"] == None: return False
+            if MODELS[Identifier]["LoadThread"].is_alive(): return False
+    return True
 
 
-def Load(Model):
+def Load(Identifier):
     try:
-        def LoadThread(Model):
+        def LoadFunction(Identifier):
             try:
-                CheckForUpdates(Model)
-                if "UpdateThread" in MODELS[Model]:
-                    while MODELS[Model]["UpdateThread"].is_alive():
+                CheckForUpdates(Identifier)
+                if "UpdateThread" in MODELS[Identifier]:
+                    while MODELS[Identifier]["UpdateThread"].is_alive():
                         time.sleep(0.1)
 
-                if GetName(Model) == None:
+                if GetName(Identifier) == None:
                     return
 
-                variables.POPUP =  ["Loading the model...", 0, 0.5]
-                print(DARK_GREY + f"[{Model}] " + GREEN + "Loading the model..." + NORMAL)
+                Popup(Text="Loading the model...", Progress=0)
+                print(GRAY + f"[{Identifier}] " + GREEN + "Loading the model..." + NORMAL)
 
                 ModelFileBroken = False
 
                 try:
-                    MODELS[Model]["Metadata"] = {"data": []}
-                    MODELS[Model]["Model"] = torch.jit.load(os.path.join(MODELS[Model]["Path"], GetName(Model)), _extra_files=MODELS[Model]["Metadata"], map_location=MODELS[Model]["Device"])
-                    MODELS[Model]["Model"].eval()
-                    MODELS[Model]["Metadata"] = eval(MODELS[Model]["Metadata"]["data"])
-                    for Item in MODELS[Model]["Metadata"]:
+                    MODELS[Identifier]["Metadata"] = {"data": []}
+                    MODELS[Identifier]["Model"] = torch.jit.load(os.path.join(MODELS[Identifier]["Path"], GetName(Identifier)), _extra_files=MODELS[Identifier]["Metadata"], map_location=MODELS[Identifier]["Device"])
+                    MODELS[Identifier]["Model"].eval()
+                    MODELS[Identifier]["Metadata"] = eval(MODELS[Identifier]["Metadata"]["data"])
+                    for Item in MODELS[Identifier]["Metadata"]:
                         Item = str(Item)
                         if "image_width" in Item:
-                            MODELS[Model]["IMG_WIDTH"] = int(Item.split("#")[1])
+                            MODELS[Identifier]["IMG_WIDTH"] = int(Item.split("#")[1])
                         if "image_height" in Item:
-                            MODELS[Model]["IMG_HEIGHT"] = int(Item.split("#")[1])
+                            MODELS[Identifier]["IMG_HEIGHT"] = int(Item.split("#")[1])
                         if "image_channels" in Item:
-                            MODELS[Model]["IMG_CHANNELS"] = str(Item.split("#")[1])
+                            MODELS[Identifier]["IMG_CHANNELS"] = str(Item.split("#")[1])
                         if "outputs" in Item:
-                            MODELS[Model]["OUTPUTS"] = int(Item.split("#")[1])
+                            MODELS[Identifier]["OUTPUTS"] = int(Item.split("#")[1])
                         if "epochs" in Item:
-                            MODELS[Model]["EPOCHS"] = int(Item.split("#")[1])
+                            MODELS[Identifier]["EPOCHS"] = int(Item.split("#")[1])
                         if "batch" in Item:
-                            MODELS[Model]["BATCH_SIZE"] = int(Item.split("#")[1])
+                            MODELS[Identifier]["BATCH_SIZE"] = int(Item.split("#")[1])
                         if "class_list" in Item:
-                            MODELS[Model]["CLASS_LIST"] = eval(Item.split("#")[1])
+                            MODELS[Identifier]["CLASS_LIST"] = eval(Item.split("#")[1])
                         if "image_count" in Item:
-                            MODELS[Model]["IMAGE_COUNT"] = int(Item.split("#")[1])
+                            MODELS[Identifier]["IMAGE_COUNT"] = int(Item.split("#")[1])
                         if "training_time" in Item:
-                            MODELS[Model]["TRAINING_TIME"] = Item.split("#")[1]
+                            MODELS[Identifier]["TRAINING_TIME"] = Item.split("#")[1]
                         if "training_date" in Item:
-                            MODELS[Model]["TRAINING_DATE"] = Item.split("#")[1]
+                            MODELS[Identifier]["TRAINING_DATE"] = Item.split("#")[1]
                 except:
                     ModelFileBroken = True
 
                 if ModelFileBroken == False:
-                    variables.POPUP =  ["Successfully loaded the model!", 0, 0.5]
-                    print(DARK_GREY + f"[{Model}] " + GREEN + "Successfully loaded the model!" + NORMAL)
-                    MODELS[Model]["ModelLoaded"] = True
+                    Popup(Text="Successfully loaded the model!", Progress=100)
+                    print(GRAY + f"[{Identifier}] " + GREEN + "Successfully loaded the model!" + NORMAL)
+                    MODELS[Identifier]["ModelLoaded"] = True
                 else:
-                    variables.POPUP =  ["Failed to load the model because the model file is broken.", 0, 0.5]
-                    print(DARK_GREY + f"[{Model}] " + RED + "Failed to load the model because the model file is broken." + NORMAL)
-                    MODELS[Model]["ModelLoaded"] = False
-                    HandleBroken(Model)
+                    Popup(Text="Failed to load the model because the model file is broken.", Progress=0)
+                    print(GRAY + f"[{Identifier}] " + RED + "Failed to load the model because the model file is broken." + NORMAL)
+                    MODELS[Identifier]["ModelLoaded"] = False
+                    HandleBroken(Identifier)
             except:
-                CrashReport("PyTorch - Error in function LoadThread.", str(traceback.format_exc()))
-                variables.POPUP =  ["Failed to load the model!", 0, 0.5]
-                print(DARK_GREY + f"[{Model}] " + RED + "Failed to load the model!" + NORMAL)
-                MODELS[Model]["ModelLoaded"] = False
+                CrashReport("PyTorch - Loading Error.", str(traceback.format_exc()))
+                Popup(Text="Failed to load the model!", Progress=0)
+                print(GRAY + f"[{Identifier}] " + RED + "Failed to load the model!" + NORMAL)
+                MODELS[Identifier]["ModelLoaded"] = False
 
         if TorchAvailable:
-            if MODELS[Model]["Threaded"]:
-                MODELS[Model]["LoadThread"] = threading.Thread(target=LoadThread, args=(Model,), daemon=True)
-                MODELS[Model]["LoadThread"].start()
+            if MODELS[Identifier]["Threaded"]:
+                MODELS[Identifier]["LoadThread"] = threading.Thread(target=LoadFunction, args=(Identifier,), daemon=True)
+                MODELS[Identifier]["LoadThread"].start()
             else:
-                LoadThread(Model)
+                LoadFunction(Identifier)
 
     except:
         CrashReport("PyTorch - Error in function Load.", str(traceback.format_exc()))
-        variables.POPUP =  ["Failed to load the model.", 0, 0.5]
-        print(DARK_GREY + f"[{Model}] " + RED + "Failed to load the model." + NORMAL)
+        Popup(Text="Failed to load the model.", Progress=0)
+        print(GRAY + f"[{Identifier}] " + RED + "Failed to load the model." + NORMAL)
 
 
-def CheckForUpdates(Model):
+def CheckForUpdates(Identifier):
     try:
-        def CheckForUpdatesThread(Model):
+        def CheckForUpdatesFunction(Identifier):
             try:
+
+                if "--dev" in sys.argv:
+                    if GetName(Identifier) != None:
+                        print(GRAY + f"[{Identifier}] " + YELLOW + "Development mode enabled, skipping update check..." + NORMAL)
+                        return
+                    else:
+                        print(GRAY + f"[{Identifier}] " + YELLOW + "Development mode enabled, downloading model because it doesn't exist..." + NORMAL)
+
+                Popup(Text="Checking for model updates...", Progress=0)
+                print(GRAY + f"[{Identifier}] " + GREEN + "Checking for model updates..." + NORMAL)
+
+                if settings.Get("PyTorch", f"{Identifier}-LastUpdateCheck", 0) + 600 > time.time():
+                    if settings.Get("PyTorch", f"{Identifier}-LatestModel", "unset") == GetName(Identifier):
+                        print(GRAY + f"[{Identifier}] " + GREEN + "No model updates available!" + NORMAL)
+                        return
+
                 try:
-                    Response = requests.get("https://huggingface.co/", timeout=3)
-                    Response = Response.status_code
-                except requests.exceptions.RequestException:
-                    Response = None
+                    HuggingFaceResponse = requests.get("https://huggingface.co/", timeout=3)
+                    HuggingFaceResponse = HuggingFaceResponse.status_code
+                except:
+                    HuggingFaceResponse = None
 
-                if Response == 200:
-                    variables.POPUP =  ["Checking for model updates...", 0, 0.5]
-                    print(DARK_GREY + f"[{Model}] " + GREEN + "Checking for model updates..." + NORMAL)
-
-                    if settings.Get("PyTorch", f"{Model}-LastUpdateCheck", 0) + 600 > time.time():
-                        if settings.Get("PyTorch", f"{Model}-LatestModel", "unset") == GetName(Model):
-                            print(DARK_GREY + f"[{Model}] " + GREEN + "No model updates available!" + NORMAL)
-                            return
-
-                    Url = f'https://huggingface.co/{MODELS[Model]["ModelOwner"]}/{Model}/tree/main/model'
+                if HuggingFaceResponse == 200:
+                    Url = f'https://huggingface.co/{MODELS[Identifier]["ModelOwner"]}/{Identifier.split("/")[0]}/tree/main/{"/".join(Identifier.split("/")[1:])}'
                     Response = requests.get(Url)
                     Soup = BeautifulSoup(Response.content, 'html.parser')
 
                     LatestModel = None
                     for Link in Soup.find_all("a", href=True):
                         HREF = Link["href"]
-                        if HREF.startswith(f'/{MODELS[Model]["ModelOwner"]}/{Model}/blob/main/model'):
+                        if HREF.startswith(f'/{MODELS[Identifier]["ModelOwner"]}/{Identifier.split("/")[0]}/blob/main/{"/".join(Identifier.split("/")[1:])}'):
                             LatestModel = HREF.split("/")[-1]
-                            settings.Set("PyTorch", f"{Model}-LatestModel", LatestModel)
+                            settings.Set("PyTorch", f"{Identifier}-LatestModel", LatestModel)
                             break
                     if LatestModel == None:
-                        LatestModel = settings.Get("PyTorch", f"{Model}-LatestModel", "unset")
+                        LatestModel = settings.Get("PyTorch", f"{Identifier}-LatestModel", "unset")
 
-                    CurrentModel = GetName(Model)
+                    CurrentModel = GetName(Identifier)
 
                     if str(LatestModel) != str(CurrentModel):
-                        variables.POPUP =  ["Updating the model...", 0, 0.5]
-                        print(DARK_GREY + f"[{Model}] " + GREEN + "Updating the model..." + NORMAL)
-                        Delete(Model)
-                        Response = requests.get(f'https://huggingface.co/{MODELS[Model]["ModelOwner"]}/{Model}/resolve/main/model/{LatestModel}?download=true', stream=True)
-                        with open(os.path.join(MODELS[Model]["Path"], f"{LatestModel}"), "wb") as ModelFile:
-                            TotalSize = int(Response.headers.get('content-length', 0))
+                        Popup(Text="Updating the model...", Progress=0)
+                        print(GRAY + f"[{Identifier}] " + GREEN + "Updating the model..." + NORMAL)
+                        Delete(Identifier)
+                        StartTime = time.time()
+                        Response = requests.get(f'https://huggingface.co/{MODELS[Identifier]["ModelOwner"]}/{Identifier.split("/")[0]}/resolve/main/{"/".join(Identifier.split("/")[1:])}/{LatestModel}?download=true', stream=True, timeout=15)
+                        with open(os.path.join(MODELS[Identifier]["Path"], f"{LatestModel}"), "wb") as ModelFile:
+                            TotalSize = int(Response.headers.get('content-length', 1))
                             DownloadedSize = 0
                             ChunkSize = 1024
                             for Data in Response.iter_content(chunk_size=ChunkSize):
                                 DownloadedSize += len(Data)
                                 ModelFile.write(Data)
                                 Progress = (DownloadedSize / TotalSize) * 100
-                                variables.POPUP =  [f"Downloading the model: {round(Progress)}%", round(Progress), 0.5]
-                        variables.POPUP =  ["Successfully updated the model!", 0, 0.5]
-                        print(DARK_GREY + f"[{Model}] " + GREEN + "Successfully updated the model!" + NORMAL)
+                                ETA = time.strftime('%H:%M:%S' if (time.time() - StartTime) / Progress * (100 - Progress) >= 3600 else '%M:%S', time.gmtime((time.time() - StartTime) / Progress * (100 - Progress)))
+                                Popup(Text=f"Downloading the model: {round(Progress)}% - ETA: {ETA}", Progress=Progress)
+                        Popup(Text="Successfully updated the model!", Progress=100)
+                        print(GRAY + f"[{Identifier}] " + GREEN + "Successfully updated the model!" + NORMAL)
                     else:
-                        variables.POPUP =  ["No model updates available!", 0, 0.5]
-                        print(DARK_GREY + f"[{Model}] " + GREEN + "No model updates available!" + NORMAL)
-                    settings.Set("PyTorch", f"{Model}-LastUpdateCheck", time.time())
+                        Popup(Text="No model updates available!", Progress=100)
+                        print(GRAY + f"[{Identifier}] " + GREEN + "No model updates available!" + NORMAL)
+                    settings.Set("PyTorch", f"{Identifier}-LastUpdateCheck", time.time())
 
                 else:
 
                     console.RestoreConsole()
-                    variables.POPUP =  ["Connection to https://huggingface.co/ is most likely not available in your country. Unable to check for model updates.", 0, 0.5]
-                    print(DARK_GREY + f"[{Model}] " + RED + "Connection to https://huggingface.co/ is most likely not available in your country. Unable to check for model updates." + NORMAL)
+                    Popup(Text="Connection to 'https://huggingface.co' is not available. Unable to check for updates.", Progress=0)
+                    print(GRAY + f"[{Identifier}] " + RED + "Connection to 'https://huggingface.co' is not available. Unable to check for updates." + NORMAL)
 
             except:
-                CrashReport("PyTorch - Error in function CheckForUpdatesThread.", str(traceback.format_exc()))
-                variables.POPUP =  ["Failed to check for model updates or update the model.", 0, 0.5]
-                print(DARK_GREY + f"[{Model}] " + RED + "Failed to check for model updates or update the model." + NORMAL)
+                CrashReport("PyTorch - Error in function CheckForUpdatesFunction.", str(traceback.format_exc()))
+                Popup(Text="Failed to check for model updates or update the model.", Progress=0)
+                print(GRAY + f"[{Identifier}] " + RED + "Failed to check for model updates or update the model." + NORMAL)
 
-        if MODELS[Model]["Threaded"]:
-            MODELS[Model]["UpdateThread"] = threading.Thread(target=CheckForUpdatesThread, args=(Model,), daemon=True)
-            MODELS[Model]["UpdateThread"].start()
+        if MODELS[Identifier]["Threaded"]:
+            MODELS[Identifier]["UpdateThread"] = threading.Thread(target=CheckForUpdatesFunction, args=(Identifier,), daemon=True)
+            MODELS[Identifier]["UpdateThread"].start()
         else:
-            CheckForUpdatesThread(Model)
+            CheckForUpdatesFunction(Identifier)
 
     except:
         CrashReport("PyTorch - Error in function CheckForUpdates.", str(traceback.format_exc()))
-        variables.POPUP =  ["Failed to check for model updates or update the model.", 0, 0.5]
-        print(DARK_GREY + f"[{Model}] " + RED + "Failed to check for model updates or update the model." + NORMAL)
+        Popup(Text="Failed to check for model updates or update the model.", Progress=0)
+        print(GRAY + f"[{Identifier}] " + RED + "Failed to check for model updates or update the model." + NORMAL)
 
 
-def FolderExists(Model):
+def FolderExists(Identifier):
     try:
-        if os.path.exists(MODELS[Model]["Path"]) == False:
-            os.makedirs(MODELS[Model]["Path"])
+        if os.path.exists(MODELS[Identifier]["Path"]) == False:
+            os.makedirs(MODELS[Identifier]["Path"])
     except:
         CrashReport("PyTorch - Error in function FolderExists.", str(traceback.format_exc()))
 
 
-def GetName(Model):
+def GetName(Identifier):
     try:
-        FolderExists(Model)
-        for File in os.listdir(MODELS[Model]["Path"]):
+        FolderExists(Identifier)
+        for File in os.listdir(MODELS[Identifier]["Path"]):
             if File.endswith(".pt"):
                 return File
         return None
@@ -360,30 +376,36 @@ def GetName(Model):
         return None
 
 
-def Delete(Model):
+def Delete(Identifier):
     try:
-        FolderExists(Model)
-        for File in os.listdir(MODELS[Model]["Path"]):
+        if "--dev" in sys.argv and os.listdir(MODELS[Identifier]["Path"]) != []:
+            print(GRAY + f"[{Identifier}] " + YELLOW + "Development mode enabled, skipping model deletion..." + NORMAL)
+            return
+        FolderExists(Identifier)
+        for File in os.listdir(MODELS[Identifier]["Path"]):
             if File.endswith(".pt"):
-                os.remove(os.path.join(MODELS[Model]["Path"], File))
+                os.remove(os.path.join(MODELS[Identifier]["Path"], File))
     except PermissionError:
         global TorchAvailable
         TorchAvailable = False
-        CrashReport("PyTorch - PermissionError in function Delete.", str(traceback.format_exc()))
+        print(GRAY + f"[{Identifier}] " + RED + "PyTorch - PermissionError in function Delete:\n" + NORMAL + str(traceback.format_exc()))
         console.RestoreConsole()
     except:
         CrashReport("PyTorch - Error in function Delete.", str(traceback.format_exc()))
 
 
-def HandleBroken(Model):
+def HandleBroken(Identifier):
     try:
-        Delete(Model)
-        CheckForUpdates(Model)
-        if "UpdateThread" in MODELS[Model]:
-            while MODELS[Model]["UpdateThread"].is_alive():
+        if "--dev" in sys.argv:
+            print(GRAY + f"[{Identifier}] " + RED + "Can't handle broken models in development mode, all pytorch loader actions paused..." + NORMAL)
+            while True: time.sleep(1)
+        Delete(Identifier)
+        CheckForUpdates(Identifier)
+        if "UpdateThread" in MODELS[Identifier]:
+            while MODELS[Identifier]["UpdateThread"].is_alive():
                 time.sleep(0.1)
         time.sleep(0.5)
         if TorchAvailable == True:
-            Load(Model)
+            Load(Identifier)
     except:
         CrashReport("PyTorch - Error in function HandleBroken.", str(traceback.format_exc()))

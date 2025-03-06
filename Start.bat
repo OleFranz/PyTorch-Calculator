@@ -7,6 +7,8 @@ echo PyTorch-Calculator
 echo ------------------
 echo.
 
+cd /d %~dp0
+
 set "PATH=%cd%\python\Scripts;%cd%\python"
 
 if not exist "%cd%\python" (

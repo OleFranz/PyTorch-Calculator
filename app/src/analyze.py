@@ -1,5 +1,4 @@
 from src.crashreport import CrashReport
-import src.uicomponents as uicomponents
 import src.variables as variables
 import src.pytorch as pytorch
 import SimpleWindow
@@ -21,7 +20,29 @@ NORMAL = "\033[0m"
 UPDATING = False
 
 
+def GetTextSize(Text="NONE", TextWidth=100, Fontsize=11):
+    try:
+        Fontscale = 1
+        Textsize, _ = cv2.getTextSize(Text, cv2.FONT_HERSHEY_SIMPLEX, Fontscale, 1)
+        WidthCurrentText, HeightCurrentText = Textsize
+        maxCountCurrentText = 3
+        while WidthCurrentText != TextWidth or HeightCurrentText > Fontsize:
+            Fontscale *= min(TextWidth / Textsize[0], Fontsize / Textsize[1])
+            Textsize, _ = cv2.getTextSize(Text, cv2.FONT_HERSHEY_SIMPLEX, Fontscale, 1)
+            maxCountCurrentText -= 1
+            if maxCountCurrentText <= 0:
+                break
+        Thickness = round(Fontscale * 2)
+        if Thickness <= 0:
+            Thickness = 1
+        return Text, Fontscale, Thickness, Textsize[0], Textsize[1]
+    except:
+        CrashReport("Analyze - Error in function GetTextSize.", str(traceback.format_exc()))
+        return "", 1, 1, 100, 100
+
+
 def Initialize():
+    global Identifier
     global Rules
     global MaxLinesToCompareToAtOnce
     global MaxClosestLinesToConsider
@@ -32,13 +53,24 @@ def Initialize():
     global Frame
     global CleanFrame
 
-    if variables.DEVMODE:
-        SimpleWindow.Initialize(Name="PyTorch-Calculator (Dev Mode)", Size=(400, 400), Position=(variables.X + variables.WIDTH + 5, variables.Y + 430 + 5), Resizable=False, TopMost=False, Undestroyable=False, Icon=f"{variables.PATH}app/assets/{'icon_dark' if variables.THEME == 'Dark' else 'icon_light'}.ico")
+    if variables.DevelopmentMode:
+        SimpleWindow.Initialize(Name="PyTorch-Calculator (Dev Mode)",
+                                Size=(400, 400),
+                                Position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY + 430 + 5),
+                                Resizable=False,
+                                TopMost=False,
+                                Undestroyable=False,
+                                Icon=f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
 
-    SimpleWindow.Initialize(Name="PyTorch-Calculator Detection", Size=(400, 400), Position=(variables.X + variables.WIDTH + 5, variables.Y), Resizable=False, TopMost=False, Undestroyable=False, Icon=f"{variables.PATH}app/assets/{'icon_dark' if variables.THEME == 'Dark' else 'icon_light'}.ico")
+    SimpleWindow.Initialize(Name="PyTorch-Calculator Detection",
+                            Size=(400, 400), Position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY),
+                            Resizable=False,
+                            TopMost=False,
+                            Undestroyable=False,
+                            Icon=f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
 
-    pytorch.Initialize(Owner="OleFranz", Model="PyTorch-Calculator")
-    pytorch.Load("PyTorch-Calculator")
+    Identifier = pytorch.Initialize(Owner="OleFranz", Model="PyTorch-Calculator", Folder="model")
+    pytorch.Load(Identifier)
 
 
     Rules = [{
@@ -103,13 +135,13 @@ def Initialize():
     import os
     global MODEL
     MODEL = None
-    for File in os.listdir(f"{variables.PATH}cache"):
+    for File in os.listdir(f"{variables.Path}cache"):
         if File.endswith(".pt"):
             global torch, METADATA, RESOLUTION, CLASS_LIST
             print(PURPLE + "Using experimental model!" + NORMAL)
             import torch
             METADATA = {"data": []}
-            MODEL = torch.jit.load(os.path.join(f"{variables.PATH}cache", File), _extra_files=METADATA, map_location="cuda" if torch.cuda.is_available() else "cpu")
+            MODEL = torch.jit.load(os.path.join(f"{variables.Path}cache", File), _extra_files=METADATA, map_location="cuda" if torch.cuda.is_available() else "cpu")
             MODEL.eval()
             METADATA = eval(METADATA["data"])
             for Item in METADATA:
@@ -122,17 +154,17 @@ def Initialize():
 
 def ClassifyImage(Image):
     if pytorch.TorchAvailable == False: return None, 0
-    while pytorch.Loaded("PyTorch-Calculator") == False and pytorch.TorchAvailable == True: time.sleep(0.1)
+    while pytorch.Loaded(Identifier) == False and pytorch.TorchAvailable == True: time.sleep(0.1)
     Image = numpy.array(Image, dtype=numpy.float32)
     Image = cv2.cvtColor(Image, cv2.COLOR_RGB2GRAY)
-    Image = cv2.resize(Image, (pytorch.MODELS["PyTorch-Calculator"]["IMG_WIDTH"], pytorch.MODELS["PyTorch-Calculator"]["IMG_HEIGHT"]))
+    Image = cv2.resize(Image, (pytorch.MODELS[Identifier]["IMG_WIDTH"], pytorch.MODELS[Identifier]["IMG_HEIGHT"]))
     Image = Image / 255.0
-    Image = pytorch.transforms.ToTensor()(Image).unsqueeze(0).to(pytorch.MODELS["PyTorch-Calculator"]["Device"])
+    Image = pytorch.transforms.ToTensor()(Image).unsqueeze(0).to(pytorch.MODELS[Identifier]["Device"])
     with pytorch.torch.no_grad():
-        Output = numpy.array(pytorch.MODELS["PyTorch-Calculator"]["Model"](Image)[0].tolist())
+        Output = numpy.array(pytorch.MODELS[Identifier]["Model"](Image)[0].tolist())
     Confidence = max(Output)
     Output = numpy.argmax(Output)
-    return pytorch.MODELS["PyTorch-Calculator"]["CLASS_LIST"][Output] if Confidence > 0.8 else "None", Confidence
+    return pytorch.MODELS[Identifier]["CLASS_LIST"][Output] if Confidence > 0.8 else "None", Confidence
 
 
 def Update():
@@ -149,19 +181,19 @@ def Update():
                 global Frame
                 global CleanFrame
 
-                Content = (len(variables.CANVAS_CONTENT))
+                Content = (len(variables.CanvasContent))
 
-                if variables.PAGE == "Canvas" and LastContent != Content:
-                    if variables.DEVMODE:
+                if variables.Page == "Canvas" and LastContent != Content:
+                    if variables.DevelopmentMode:
                         Frame = EmptyFrame.copy()
-                    CANVAS_CONTENT = variables.CANVAS_CONTENT
+                    CANVAS_CONTENT = variables.CanvasContent
                     CleanContent = []
 
                     Start = time.perf_counter()
 
-                    if pytorch.Loaded("PyTorch-Calculator") == True and pytorch.TorchAvailable == True:
-                        if pytorch.MODELS["PyTorch-Calculator"]["IMG_WIDTH"] != BaseImage.shape[1] or pytorch.MODELS["PyTorch-Calculator"]["IMG_HEIGHT"] != BaseImage.shape[0]:
-                            BaseImage = numpy.zeros((pytorch.MODELS["PyTorch-Calculator"]["IMG_WIDTH"], pytorch.MODELS["PyTorch-Calculator"]["IMG_HEIGHT"], 3), numpy.uint8)
+                    if pytorch.Loaded(Identifier) == True and pytorch.TorchAvailable == True:
+                        if pytorch.MODELS[Identifier]["IMG_WIDTH"] != BaseImage.shape[1] or pytorch.MODELS[Identifier]["IMG_HEIGHT"] != BaseImage.shape[0]:
+                            BaseImage = numpy.zeros((pytorch.MODELS[Identifier]["IMG_WIDTH"], pytorch.MODELS[Identifier]["IMG_HEIGHT"], 3), numpy.uint8)
 
                     print(PURPLE + "Analyzing content..." + NORMAL)
                     print(GRAY + f"-> Lines: {len(CANVAS_CONTENT)}" + NORMAL)
@@ -328,10 +360,10 @@ def Update():
                             Col = i % NumCols
                             X = Col * Image.shape[1]
                             Y = Row * Image.shape[0]
-                            Text, Fontscale, Thickness, Width, Height = uicomponents.GetTextSize(f"{Class}", Image.shape[1] - 4, 10)
+                            Text, Fontscale, Thickness, Width, Height = GetTextSize(f"{Class}", Image.shape[1] - 4, 10)
                             cv2.rectangle(Image, (0, 0), (Width + 2, Height + 2), (0, 0, 0), - 1)
                             cv2.rectangle(Image, (0, 0), (Width + 2, Height + 2), (127, 127, 127), 1)
-                            cv2.putText(Image, Text, (2, Height), variables.FONT_TYPE, Fontscale, (0, 255, 0) if Class != "None" else (0, 0, 255), Thickness, cv2.LINE_AA)
+                            cv2.putText(Image, Text, (2, Height), cv2.FONT_HERSHEY_SIMPLEX, Fontscale, (0, 255, 0) if Class != "None" else (0, 0, 255), Thickness, cv2.LINE_AA)
                             GridImage[Y:Y + (Image.shape[0] - 1), X:X + (Image.shape[1] - 1)] = cv2.resize(Image, (Image.shape[1] - 1, Image.shape[0] - 1))
 
                         for i in range(NumRows + 1):
@@ -420,8 +452,8 @@ def Update():
                         X2 = round((MinX - AbsoluteMinX) * Scale + XOffset)
                         Y1 = round((MaxY - AbsoluteMinY) * Scale + YOffset)
                         Y2 = round((MinY - AbsoluteMinY) * Scale + YOffset)
-                        Text, Fontscale, Thickness, Width, Height = uicomponents.GetTextSize(Class, 100, 20)
-                        cv2.putText(CleanFrame, Text, (round((X1 + X2) / 2 - Width / 2), round((Y1 + Y2) / 2 + Height / 2)), variables.FONT_TYPE, Fontscale, (255, 255, 255), Thickness, cv2.LINE_AA)
+                        Text, Fontscale, Thickness, Width, Height = GetTextSize(Class, 100, 20)
+                        cv2.putText(CleanFrame, Text, (round((X1 + X2) / 2 - Width / 2), round((Y1 + Y2) / 2 + Height / 2)), cv2.FONT_HERSHEY_SIMPLEX, Fontscale, (255, 255, 255), Thickness, cv2.LINE_AA)
 
 
 
@@ -435,7 +467,7 @@ def Update():
             except:
                 CrashReport("Analyze - Error in function Update.", str(traceback.format_exc()))
         threading.Thread(target=UpdateThread, daemon=True).start()
-        if variables.DEVMODE:
+        if variables.DevelopmentMode:
             SimpleWindow.Show("PyTorch-Calculator (Dev Mode)", Frame)
         SimpleWindow.Show("PyTorch-Calculator Detection", CleanFrame)
     except:

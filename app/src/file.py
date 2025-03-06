@@ -1,12 +1,14 @@
 from src.crashreport import CrashReport
 import src.variables as variables
 import src.settings as settings
+import src.ui as ui
 
 import SimpleWindow
 import threading
 import traceback
 import win32con
 import win32gui
+import ImageUI
 import time
 import os
 
@@ -27,8 +29,8 @@ def MovePathPopup(Title=""):
                 while True:
                     HWND = win32gui.FindWindow(None, Title)
                     if HWND != 0:
-                        X, Y = SimpleWindow.GetPosition(variables.NAME)
-                        WIDTH, HEIGHT = SimpleWindow.GetSize(variables.NAME)
+                        X, Y = SimpleWindow.GetPosition(variables.Name)
+                        WIDTH, HEIGHT = SimpleWindow.GetSize(variables.Name)
                         win32gui.MoveWindow(HWND, X, Y, WIDTH, HEIGHT, True)
                         win32gui.SetWindowPos(HWND, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
                         win32gui.SetWindowLong(HWND, win32con.GWL_EXSTYLE, win32gui.GetWindowLong(HWND, win32con.GWL_EXSTYLE))
@@ -42,8 +44,8 @@ def MovePathPopup(Title=""):
                 HeightOffset = HEIGHT - (BottomRight[1] - TopLeft[1]) - 32
                 while True:
                     Start = time.time()
-                    X, Y = SimpleWindow.GetPosition(variables.NAME)
-                    WIDTH, HEIGHT = SimpleWindow.SimpleWindow.GetSize(variables.NAME)
+                    X, Y = SimpleWindow.GetPosition(variables.Name)
+                    WIDTH, HEIGHT = SimpleWindow.SimpleWindow.GetSize(variables.Name)
                     if win32gui.FindWindow(None, Title) == 0:
                         break
                     RECT = win32gui.GetClientRect(HWND)
@@ -51,7 +53,7 @@ def MovePathPopup(Title=""):
                     BottomRight = win32gui.ClientToScreen(HWND, (RECT[2], RECT[3]))
                     if X != TopLeft[0] or Y != TopLeft[1] or WIDTH != BottomRight[0] - TopLeft[0] or HEIGHT != BottomRight[1] - TopLeft[1]:
                         win32gui.MoveWindow(HWND, X + XOffset, Y + YOffset, WIDTH + WidthOffset, HEIGHT + HeightOffset, True)
-                    TimeToSleep = 1/variables.FPS - (time.time() - Start)
+                    TimeToSleep = 1/60 - (time.time() - Start)
                     if TimeToSleep > 0:
                         time.sleep(TimeToSleep)
             except:
@@ -68,40 +70,41 @@ def New():
     try:
         def NewThread():
             try:
-                Save(Path=f"{variables.PATH}cache/LastSession.txt")
+                Save(Path=f"{variables.Path}cache/LastSession.txt")
                 while SAVING or OPENING:
                     time.sleep(0.1)
                 print(GREEN + "Creating new file..." + NORMAL)
-                variables.FILE_PATH = ""
-                variables.POPUP = ["Creating new file...", -1, 0.5]
-                variables.CANVAS_POSITION = variables.WIDTH // 2, variables.HEIGHT // 2
-                variables.CANVAS_ZOOM = 1
-                variables.CANVAS_SHOW_GRID = True
-                variables.CANVAS_LINE_GRID = False
-                variables.DRAW_COLOR = (255, 255, 255) if variables.THEME == "Dark" else (0, 0, 0)
-                variables.SMOOTH_LINES = settings.Get("Draw", "SmoothLines", False)
-                variables.UPSCALE_LINES = settings.Get("Draw", "UpscaleLines", True)
-                variables.ANTI_ALIASING_LINES = settings.Get("Draw", "AntiAliasingLines", True)
-                variables.SMOOTH_INTERPOLATION = settings.Get("Draw", "SmoothInterpolation", False)
-                variables.MOUSE_SLOWDOWN = settings.Get("Draw", "MouseSlowdown", 1)
-                variables.CANVAS_CONTENT = []
-                variables.CANVAS_TEMP = []
-                variables.CANVAS_DELETE_LIST = []
-                variables.DROPDOWNS = {}
-                variables.SWITCHES = {}
-                print(GRAY + f"-> Show grid: {variables.CANVAS_SHOW_GRID}" + NORMAL)
-                print(GRAY + f"-> Line grid: {variables.CANVAS_LINE_GRID}" + NORMAL)
-                print(GRAY + f"-> Color: {variables.DRAW_COLOR}" + NORMAL)
-                print(GRAY + f"-> Smooth lines: {variables.SMOOTH_LINES}" + NORMAL)
-                print(GRAY + f"-> Upscale lines: {variables.UPSCALE_LINES}" + NORMAL)
-                print(GRAY + f"-> Anti-aliased lines: {variables.ANTI_ALIASING_LINES}" + NORMAL)
-                print(GRAY + f"-> Smooth interpolation: {variables.SMOOTH_INTERPOLATION}" + NORMAL)
+                ui.Popup(Text="Creating new file...", Progress=-1)
+                variables.FilePath = ""
+                variables.CanvasPosition = variables.WindowWidth // 2, variables.WindowHeight // 2
+                variables.CanvasZoom = 1
+                variables.CanvasShowGrid = settings.Get("Draw", "ShowGrid", True)
+                variables.CanvasLineGrid = settings.Get("Draw", "LineGrid", False)
+                variables.SmoothLines = settings.Get("Draw", "SmoothLines", False)
+                variables.UpscaleLines = settings.Get("Draw", "UpscaleLines", True)
+                variables.AntiAliasedLines = settings.Get("Draw", "AntiAliasedLines", True)
+                variables.SmoothInterpolation = settings.Get("Draw", "SmoothInterpolation", False)
+                variables.CanvasContent = []
+                variables.CanvasTemp = []
+                variables.CanvasDeleteList = []
+                print(GRAY + f"-> Show grid: {variables.CanvasShowGrid}" + NORMAL)
+                print(GRAY + f"-> Line grid: {variables.CanvasLineGrid}" + NORMAL)
+                print(GRAY + f"-> Smooth lines: {variables.SmoothLines}" + NORMAL)
+                print(GRAY + f"-> Upscale lines: {variables.UpscaleLines}" + NORMAL)
+                print(GRAY + f"-> Anti-aliased lines: {variables.AntiAliasedLines}" + NORMAL)
+                print(GRAY + f"-> Smooth interpolation: {variables.SmoothInterpolation}" + NORMAL)
                 print(GREEN + "Created new file successfully!\n" + NORMAL)
-                variables.POPUP = ["Created new file successfully!", 0, 0.5]
-                variables.PAGE = "Canvas"
+                variables.Page = "Canvas"
+                ImageUI.SetSwitch(ID="FileShowGrid", State=variables.CanvasShowGrid)
+                ImageUI.SetSwitch(ID="FileLineGrid", State=variables.CanvasLineGrid)
+                ImageUI.SetSwitch(ID="FileSmoothLines", State=variables.SmoothLines)
+                ImageUI.SetSwitch(ID="FileUpscaleLines", State=variables.UpscaleLines)
+                ImageUI.SetSwitch(ID="FileAntiAliasedLines", State=variables.AntiAliasedLines)
+                ImageUI.SetSwitch(ID="FileSmoothInterpolation", State=variables.SmoothInterpolation)
+                ui.Popup(Text="Created new file successfully!", Progress=0)
             except:
                 CrashReport("File - Error in function NewThread.", str(traceback.format_exc()))
-                variables.POPUP = ["Error creating new file.", 0, 0.5]
+                ui.Popup(Text="Error creating new file.", Progress=0)
         threading.Thread(target=NewThread, daemon=True).start()
     except:
         CrashReport("File - Error in function New.", str(traceback.format_exc()))
@@ -113,60 +116,60 @@ def Save(Path=""):
             global SAVING
             try:
                 print(GREEN + "Saving file..." + NORMAL)
-                variables.POPUP = ["Saving file...", -1, 0.5]
+                if f"{variables.Path}cache" not in Path:
+                    ui.Popup(Text="Saving file...", Progress=-1)
                 if Path == "":
                     MovePathPopup(Title="Select a path to save to")
                     try:
-                        variables.FILE_PATH, _, _ = win32gui.GetSaveFileNameW(
-                            InitialDir=settings.Get("File", "LastDirectory", os.path.dirname(os.path.dirname(variables.PATH))),
+                        variables.FilePath, _, _ = win32gui.GetSaveFileNameW(
+                            InitialDir=settings.Get("File", "LastDirectory", os.path.dirname(os.path.dirname(variables.Path))),
                             Flags=win32con.OFN_OVERWRITEPROMPT | win32con.OFN_EXPLORER,
                             DefExt="txt",
                             Title="Select a path to save to",
                             Filter="PyTorch-Calculator Text Files\0*.txt\0"
                         )
-                        Path = variables.FILE_PATH
+                        Path = variables.FilePath
                     except win32gui.error:
                         print(RED + "File not saved!\n" + NORMAL)
-                        variables.POPUP = ["File not saved!", 0, 0.5]
+                        if f"{variables.Path}cache" not in Path:
+                            ui.Popup(Text="File not saved!", Progress=0)
                         SAVING = False
                         return
                 if Path == "":
                     print(RED + "File not saved!\n" + NORMAL)
-                    variables.POPUP = ["File not saved!", 0, 0.5]
+                    if f"{variables.Path}cache" not in Path:
+                        ui.Popup(Text="File not saved!", Progress=0)
                     SAVING = False
                     return
                 if Path.endswith(".txt") == False:
                     Path += ".txt"
                 if os.path.exists(os.path.dirname(Path)) == False:
                     os.makedirs(os.path.dirname(Path))
-                if f"{variables.PATH}cache" not in Path:
+                if f"{variables.Path}cache" not in Path:
                     settings.Set("File", "LastDirectory", os.path.dirname(Path))
                 print(GRAY + f"-> {Path}" + NORMAL)
-                with open(Path, "w") as F:
-                    F.write(f"""
-                        CANVAS_POSITION#{variables.CANVAS_POSITION}###
-                        CANVAS_ZOOM#{variables.CANVAS_ZOOM}###
-                        CANVAS_SHOW_GRID#{variables.CANVAS_SHOW_GRID}###
-                        CANVAS_LINE_GRID#{variables.CANVAS_LINE_GRID}###
-                        DRAW_COLOR#{variables.DRAW_COLOR}###
-                        SMOOTH_LINES#{variables.SMOOTH_LINES}###
-                        UPSCALE_LINES#{variables.UPSCALE_LINES}###
-                        ANTI_ALIASING_LINES#{variables.ANTI_ALIASING_LINES}###
-                        SMOOTH_INTERPOLATION#{variables.SMOOTH_INTERPOLATION}###
-                        MOUSE_SLOWDOWN#{variables.MOUSE_SLOWDOWN}###
-                        CANVAS_CONTENT#{variables.CANVAS_CONTENT}###
-                        CANVAS_TEMP#{variables.CANVAS_TEMP}###
-                        CANVAS_DELETE_LIST#{variables.CANVAS_DELETE_LIST}
+                with open(Path, "w") as File:
+                    File.write(f"""
+                        CanvasPosition#{variables.CanvasPosition}###
+                        CanvasZoom#{variables.CanvasZoom}###
+                        CanvasShowGrid#{variables.CanvasShowGrid}###
+                        CanvasLineGrid#{variables.CanvasLineGrid}###
+                        SmoothLines#{variables.SmoothLines}###
+                        UpscaleLines#{variables.UpscaleLines}###
+                        AntiAliasedLines#{variables.AntiAliasedLines}###
+                        SmoothInterpolation#{variables.SmoothInterpolation}###
+                        CanvasContent#{variables.CanvasContent}###
+                        CanvasTemp#{variables.CanvasTemp}###
+                        CanvasDeleteList#{variables.CanvasDeleteList}
                     """.replace(" ", "").replace("\n", ""))
                 print(GREEN + "File saved successfully!\n" + NORMAL)
-                if f"{variables.PATH}cache" not in Path:
-                    variables.POPUP = ["File saved successfully!", 0, 0.5]
-                else:
-                    variables.POPUP = POPUP = [None, 0, 0.5]
-                variables.PAGE = "Canvas"
+                if f"{variables.Path}cache" not in Path:
+                    ui.Popup(Text="File saved successfully!", Progress=0)
+                variables.Page = "Canvas"
             except:
                 CrashReport("File - Error in function SaveThread.", str(traceback.format_exc()))
-                variables.POPUP = ["File not saved!", 0, 0.5]
+                if f"{variables.Path}cache" not in Path:
+                    ui.Popup(Text="File not saved!", Progress=0)
             SAVING = False
         global SAVING
         SAVING = True
@@ -181,47 +184,53 @@ def Open(Path=""):
             global OPENING
             try:
                 print(GREEN + "Opening file..." + NORMAL)
-                variables.POPUP = ["Opening file...", -1, 0.5]
+                if f"{variables.Path}cache" not in Path:
+                    ui.Popup(Text="Opening file...", Progress=-1)
                 if Path == "" or os.path.exists(Path) == False:
                     MovePathPopup(Title="Select a text file to open")
                     try:
-                        variables.FILE_PATH, _, _ = win32gui.GetOpenFileNameW(
-                            InitialDir=settings.Get("File", "LastDirectory", os.path.dirname(os.path.dirname(variables.PATH))),
+                        variables.FilePath, _, _ = win32gui.GetOpenFileNameW(
+                            InitialDir=settings.Get("File", "LastDirectory", os.path.dirname(os.path.dirname(variables.Path))),
                             Flags=win32con.OFN_OVERWRITEPROMPT | win32con.OFN_EXPLORER,
                             DefExt="txt",
                             Title="Select a text file to open",
                             Filter="PyTorch-Calculator Text Files\0*.txt\0"
                         )
-                        Path = variables.FILE_PATH
+                        Path = variables.FilePath
                     except win32gui.error:
                         print(RED + "File not opened!\n" + NORMAL)
-                        variables.POPUP = ["File not opened!", 0, 0.5]
+                        if f"{variables.Path}cache" not in Path:
+                            ui.Popup(Text="File not opened!", Progress=0)
                         OPENING = False
                         return
                 if Path == "" or os.path.exists(Path) == False:
                     print(RED + "File not opened!\n" + NORMAL)
-                    variables.POPUP = ["File not opened!", 0, 0.5]
+                    if f"{variables.Path}cache" not in Path:
+                        ui.Popup(Text="File not opened!", Progress=0)
                     OPENING = False
                     return
-                if f"{variables.PATH}cache" not in Path:
+                if f"{variables.Path}cache" not in Path:
                     settings.Set("File", "LastDirectory", os.path.dirname(Path))
                 print(GRAY + f"-> {Path}" + NORMAL)
-                with open(Path, "r") as F:
-                    Content = str(F.read()).replace("\n", "").replace(" ", "")
+                with open(Path, "r") as File:
+                    Content = str(File.read()).replace("\n", "").replace(" ", "")
                     for Item in Content.split("###"):
                         Key, Value = Item.split("#")
                         setattr(variables, Key, eval(Value))
-                variables.DROPDOWNS = {}
-                variables.SWITCHES = {}
+                ImageUI.SetSwitch(ID="FileShowGrid", State=variables.CanvasShowGrid)
+                ImageUI.SetSwitch(ID="FileLineGrid", State=variables.CanvasLineGrid)
+                ImageUI.SetSwitch(ID="FileSmoothLines", State=variables.SmoothLines)
+                ImageUI.SetSwitch(ID="FileUpscaleLines", State=variables.UpscaleLines)
+                ImageUI.SetSwitch(ID="FileAntiAliasedLines", State=variables.AntiAliasedLines)
+                ImageUI.SetSwitch(ID="FileSmoothInterpolation", State=variables.SmoothInterpolation)
                 print(GREEN + "File opened successfully!\n" + NORMAL)
-                if f"{variables.PATH}cache" not in Path:
-                    variables.POPUP = ["File opened successfully!", 0, 0.5]
-                else:
-                    variables.POPUP = POPUP = [None, 0, 0.5]
-                variables.PAGE = "Canvas"
+                if f"{variables.Path}cache" not in Path:
+                    ui.Popup(Text="File opened successfully!", Progress=0)
+                variables.Page = "Canvas"
             except:
                 CrashReport("File - Error in function OpenThread.", str(traceback.format_exc()))
-                variables.POPUP = ["File not opened!", 0, 0.5]
+                if f"{variables.Path}cache" not in Path:
+                    ui.Popup(Text="File not opened!", Progress=0)
             OPENING = False
         global OPENING
         OPENING = True
