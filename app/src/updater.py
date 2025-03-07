@@ -6,7 +6,6 @@ import src.ui as ui
 import subprocess
 import traceback
 import requests
-import ImageUI
 import time
 
 

@@ -1,1 +1,2 @@
-UI Rewrite.
+0.11: UI Rewrite.
+0.12: Bug fixes.

@@ -75,6 +75,7 @@ def SetTheme(Theme):
     variables.DrawColor = (255, 255, 255) if Theme == "Dark" else (0, 0, 0)
     ImageUI.SetTheme(Theme)
     SimpleWindow.SetTitleBarColor(variables.Name, (47, 47, 47) if variables.Theme == "Dark" else (231, 231, 231))
+    SimpleWindow.SetIcon(variables.Name, f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
 
 
 def Popup(Text, Progress = 0):

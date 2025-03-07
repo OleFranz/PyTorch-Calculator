@@ -60,14 +60,14 @@ def Initialize():
                                 Resizable=False,
                                 TopMost=False,
                                 Undestroyable=False,
-                                Icon=f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
+                                Icon=f"{variables.Path}app/assets/icon_dark.ico")
 
     SimpleWindow.Initialize(Name="PyTorch-Calculator Detection",
                             Size=(400, 400), Position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY),
                             Resizable=False,
                             TopMost=False,
                             Undestroyable=False,
-                            Icon=f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
+                            Icon=f"{variables.Path}app/assets/icon_dark.ico")
 
     Identifier = pytorch.Initialize(Owner="OleFranz", Model="PyTorch-Calculator", Folder="model")
     pytorch.Load(Identifier)
