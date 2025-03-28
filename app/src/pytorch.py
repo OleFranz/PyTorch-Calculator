@@ -52,7 +52,7 @@ def InstallCUDA():
     try:
         def InstallCUDAThread():
             try:
-                Command = ["cmd", "/c", f"{variables.Path}python/python.exe -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124 --progress-bar raw --force-reinstall"]
+                Command = ["cmd", "/c", f"{variables.Path}python/python.exe -m pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu126 --progress-bar raw --force-reinstall"]
                 Process = subprocess.Popen(Command, cwd=variables.Path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 with open(LockFilePath, "w") as File:
                     File.write(str(Process.pid))
@@ -97,7 +97,7 @@ def UninstallCUDA():
     try:
         def UninstallCUDAThread():
             try:
-                Command = ["cmd", "/c", f"{variables.Path}python/python.exe -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --progress-bar raw --force-reinstall"]
+                Command = ["cmd", "/c", f"{variables.Path}python/python.exe -m pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --progress-bar raw --force-reinstall"]
                 Process = subprocess.Popen(Command, cwd=variables.Path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 with open(LockFilePath, "w") as File:
                     File.write(str(Process.pid))
@@ -163,11 +163,11 @@ def CheckCUDA():
                         PyTorchModules.append(Module)
                         if "cu" not in Module:
                             CUDAInstalled = False
-                GPUS = [str(GPU.name) for GPU in GPUtil.getGPUs()]
+                GPUs = [str(GPU.name) for GPU in GPUtil.getGPUs()]
                 variables.CUDAInstalled = CUDAInstalled
                 variables.CUDAAvailable = torch.cuda.is_available()
-                variables.CUDACompatible = ("nvidia" in str([GPU.lower() for GPU in GPUS]))
-                variables.CUDADetails = "\n".join(PyTorchModules) + "\n" + "\n".join([str(GPU.name).upper() for GPU in GPUtil.getGPUs()] if len(GPUS) > 0 else ["No GPUs found."])
+                variables.CUDACompatible = ("nvidia" in str([GPU.lower() for GPU in GPUs]))
+                variables.CUDADetails = "\n".join(PyTorchModules) + "\n" + "\n".join([str(GPU.name).upper() for GPU in GPUtil.getGPUs()] if len(GPUs) > 0 else ["No GPUs found."])
             except:
                 CrashReport("PyTorch - Error in function CheckCUDAThread.", str(traceback.format_exc()))
         threading.Thread(target=CheckCUDAThread, daemon=True).start()
