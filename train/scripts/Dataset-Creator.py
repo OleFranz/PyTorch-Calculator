@@ -41,9 +41,29 @@ CLASSES = [
            "-",
            "*",
            "/",
+           "~",
+           "^",
+           "%",
+           "?",
+           "!",
+           ".",
+           ",",
+           ":",
+           ";",
            "=",
+           ">",
+           "<",
+           ">=",
+           "<=",
+           "|",
            "(",
            ")",
+           "[",
+           "]",
+           "{",
+           "}",
+           "pi (symbol)",
+           "sqrt (symbol)",
            "None"
 ]
 
@@ -464,7 +484,7 @@ while True:
         if len(CANVAS_CONTENT) > 0:
             if os.path.exists(f"{DATA_FOLDER}") == False:
                 os.mkdir(f"{DATA_FOLDER}")
-            Name = len(os.listdir(DATA_FOLDER)) + 1
+            Name = len([File for File in os.listdir(DATA_FOLDER) if File.endswith(".txt")]) + 1
             while os.path.exists(f"{DATA_FOLDER}{Name}.txt"):
                 Name += 1
             with open(f"{DATA_FOLDER}{Name}.txt", "w") as F:
