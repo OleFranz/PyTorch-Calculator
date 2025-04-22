@@ -1,5 +1,6 @@
 import src.variables as variables
 import src.settings as settings
+import src.analyze as analyze
 import src.console as console
 import src.pytorch as pytorch
 import src.updater as updater
@@ -46,16 +47,16 @@ def Initialize():
     variables.Canvas = np.zeros((WindowHeight - 50, WindowWidth, 3), np.uint8)
     variables.Canvas[:] = (28, 28, 28) if variables.Theme == "Dark" else (250, 250, 250)
 
-    SimpleWindow.Initialize(Name=variables.Name,
-                            Size=(WindowWidth, WindowHeight),
-                            Position=(WindowX, WindowY),
-                            TitleBarColor=(47, 47, 47) if variables.Theme == "Dark" else (231, 231, 231),
-                            Resizable=False,
-                            TopMost=False,
-                            Undestroyable=False,
-                            Icon=f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
+    variables.Window = SimpleWindow.Window(name=variables.Name,
+                                           size=(WindowWidth, WindowHeight),
+                                           position=(WindowX, WindowY),
+                                           title_bar_color=(47, 47, 47) if variables.Theme == "Dark" else (231, 231, 231),
+                                           resizable=True,
+                                           topmost=False,
+                                           undestroyable=False,
+                                           icon=f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
 
-    SimpleWindow.Show(variables.Name, variables.Background)
+    variables.Window.show(variables.Background)
 
     ImageUI.Settings.CachePath = f"{variables.Path}cache"
 
@@ -74,8 +75,8 @@ def SetTheme(Theme):
     variables.Canvas[:] = (28, 28, 28) if variables.Theme == "Dark" else (250, 250, 250)
     variables.DrawColor = (255, 255, 255) if Theme == "Dark" else (0, 0, 0)
     ImageUI.SetTheme(Theme)
-    SimpleWindow.SetTitleBarColor(variables.Name, (47, 47, 47) if variables.Theme == "Dark" else (231, 231, 231))
-    SimpleWindow.SetIcon(variables.Name, f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
+    variables.Window.set_title_bar_color((47, 47, 47) if variables.Theme == "Dark" else (231, 231, 231))
+    variables.Window.set_icon(f"{variables.Path}app/assets/{'icon_dark' if variables.Theme == 'Dark' else 'icon_light'}.ico")
 
 
 def Popup(Text, Progress = 0):
@@ -105,8 +106,8 @@ def Resize(WindowX, WindowY, WindowWidth, WindowHeight):
     variables.Canvas = np.zeros((WindowHeight - 50, WindowWidth, 3), np.uint8)
     variables.Canvas[:] = (28, 28, 28) if variables.Theme == "Dark" else (250, 250, 250)
     if variables.DevelopmentMode == True:
-        SimpleWindow.SetPosition("PyTorch-Calculator (Dev Mode)", (variables.WindowX + variables.WindowWidth + 5, variables.WindowY + 430 + 5))
-    SimpleWindow.SetPosition("PyTorch-Calculator Detection", (variables.WindowX + variables.WindowWidth + 5, variables.WindowY))
+        analyze.WindowDev.set_position((variables.WindowX + variables.WindowWidth + 5, variables.WindowY + 430 + 5))
+    analyze.WindowDetection.set_position((variables.WindowX + variables.WindowWidth + 5, variables.WindowY))
 
 
 def Restart():
@@ -132,16 +133,16 @@ def Close(SaveCanvas=True):
 
 
 def Update():
-    if SimpleWindow.GetMinimized(variables.Name):
-        SimpleWindow.Show(variables.Name, variables.Frame)
+    if variables.Window.get_minimized():
+        variables.Window.show(variables.Frame)
         return
 
-    if SimpleWindow.GetOpen(variables.Name) != True:
+    if variables.Window.get_open() != True:
         Close()
         return
 
-    WindowX, WindowY = SimpleWindow.GetPosition(variables.Name)
-    WindowWidth, WindowHeight = SimpleWindow.GetSize(variables.Name)
+    WindowX, WindowY = variables.Window.get_position()
+    WindowWidth, WindowHeight = variables.Window.get_size()
     if (WindowX, WindowY, WindowWidth, WindowHeight) != (variables.WindowX, variables.WindowY, variables.WindowWidth, variables.WindowHeight):
         Resize(WindowX, WindowY, WindowWidth, WindowHeight)
 
@@ -580,5 +581,5 @@ def Update():
                        })
 
     Frame = variables.Background.copy()
-    variables.Frame = ImageUI.Update(WindowHWND=SimpleWindow.GetHandle(variables.Name), Frame=Frame)
-    SimpleWindow.Show(variables.Name, Frame=variables.Frame)
+    variables.Frame = ImageUI.Update(WindowHWND=variables.Window.get_handle(), Frame=Frame)
+    variables.Window.show(variables.Frame)

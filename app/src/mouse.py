@@ -2,7 +2,6 @@ from src.crashreport import CrashReport
 import src.variables as variables
 import src.ui as ui
 
-import SimpleWindow
 import threading
 import traceback
 import ctypes
@@ -23,7 +22,7 @@ def Run():
                 WasDisabled = False
                 MoveStart = 0, 0
                 while variables.Break == False:
-                    if SimpleWindow.GetForeground(variables.Name) == False or variables.Page != "Canvas" or ui.ShowContextMenu:
+                    if variables.Window.get_foreground() == False or variables.Page != "Canvas" or ui.ShowContextMenu:
                         time.sleep(0.1)
                         WasDisabled = True
                         continue

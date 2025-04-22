@@ -1,6 +1,5 @@
 import src.settings as settings
-import ImageUI
-import cv2
+import SimpleWindow
 import os
 
 OS = os.name
@@ -41,6 +40,7 @@ WindowY = settings.Get("UI", "Y", 100)
 WindowWidth = settings.Get("UI", "Width", 960)
 WindowHeight = settings.Get("UI", "Height", 540)
 
+Window: SimpleWindow.Window = None
 Name = "PyTorch-Calculator"
 Page = settings.Get("UI", "Page", "Canvas")
 Frame = None

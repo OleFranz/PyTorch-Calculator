@@ -20,7 +20,9 @@ def Update():
                    variables.CanvasLineGrid,
                    len(variables.CanvasTemp),
                    len(variables.CanvasDeleteList),
-                   variables.Theme)
+                   variables.Theme,
+                   variables.WindowWidth,
+                   variables.WindowHeight)
 
         if variables.Page == "Canvas" and LastContent != Content:
             if variables.Canvas.shape != (variables.WindowHeight - 50, variables.WindowWidth, 3):

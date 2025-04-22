@@ -18,6 +18,7 @@ if PATH[-1] != "/":
 
 DATA_FOLDER = PATH + "dataset/raw/"
 
+WINDOW: SimpleWindow.Window = None
 WINDOWNAME = "PyTorch-Calculator - Dataset Creator"
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 540
@@ -130,15 +131,15 @@ def RunMouse():
                 WasDisabled = False
                 MoveStart = 0, 0
                 while BREAK == False:
-                    if SimpleWindow.GetForeground(WINDOWNAME) == False:
+                    if WINDOW.get_foreground() == False:
                         time.sleep(0.1)
                         WasDisabled = True
                         continue
 
                     global CANVAS_POSITION, CANVAS_ZOOM, CANVAS_TEMP
 
-                    WindowX, WindowY = SimpleWindow.GetPosition(WINDOWNAME)
-                    WindowWidth, WindowHeight = SimpleWindow.GetSize(WINDOWNAME)
+                    WindowX, WindowY = WINDOW.get_position()
+                    WindowWidth, WindowHeight = WINDOW.get_size()
                     MouseX, MouseY = mouse.get_position()
 
                     WindowWidth -= SIDEBAR
@@ -148,8 +149,8 @@ def RunMouse():
 
                     if WasDisabled:
                         while True:
-                            WindowX, WindowY = SimpleWindow.GetPosition(WINDOWNAME)
-                            WindowWidth, WindowHeight = SimpleWindow.GetSize(WINDOWNAME)
+                            WindowX, WindowY = WINDOW.get_position()
+                            WindowWidth, WindowHeight = WINDOW.get_size()
                             MouseX, MouseY = mouse.get_position()
 
                             LeftClicked = ctypes.windll.user32.GetKeyState(0x01) & 0x8000 != 0 and WindowX <= MouseX <= WindowX + WindowWidth and WindowY <= MouseY <= WindowY + WindowHeight
@@ -207,7 +208,7 @@ def RunKeyboard():
                 while BREAK == False:
                     Start = time.time()
 
-                    if SimpleWindow.GetForeground(WINDOWNAME) == False:
+                    if WINDOW.get_foreground() == False:
                         time.sleep(0.1)
                         continue
 
@@ -307,7 +308,13 @@ def Button(Text="NONE", X1=0, Y1=0, X2=100, Y2=100, Fontsize=FONT_SIZE, RoundCor
         return False, False, False
 
 
-SimpleWindow.Initialize(Name=WINDOWNAME, Size=(WINDOW_WIDTH, WINDOW_HEIGHT), Position=(WINDOW_X, WINDOW_Y), TitleBarColor=BACKGROUND_COLOR, Resizable=True, Icon=f"{PATH}assets/icon.ico")
+WINDOW = SimpleWindow.Window(name=WINDOWNAME,
+                             size=(WINDOW_WIDTH, WINDOW_HEIGHT),
+                             position=(WINDOW_X, WINDOW_Y),
+                             title_bar_color=BACKGROUND_COLOR,
+                             resizable=False,
+                             icon=f"{PATH}assets/icon.ico")
+
 
 LastLeftClicked = False
 LastRightClicked = False
@@ -327,8 +334,8 @@ RunKeyboard()
 while True:
     Start = time.time()
 
-    WindowX, WindowY = SimpleWindow.GetPosition(WINDOWNAME)
-    WindowWidth, WindowHeight = SimpleWindow.GetSize(WINDOWNAME)
+    WindowX, WindowY = WINDOW.get_position()
+    WindowWidth, WindowHeight = WINDOW.get_size()
     MouseX, MouseY = mouse.get_position()
     MouseRelativeWindow = MouseX - WindowX, MouseY - WindowY
     if WindowWidth != 0 and WindowHeight != 0:
@@ -525,9 +532,9 @@ while True:
 
     cv2.line(Frame, (CanvasFrame.shape[1] - 1, 0), (CanvasFrame.shape[1] - 1, CanvasFrame.shape[0] - 1), (255, 255, 255), 1, cv2.LINE_AA)
 
-    SimpleWindow.Show(Name=WINDOWNAME, Frame=Frame)
+    WINDOW.show(Frame)
 
-    if SimpleWindow.GetOpen(WINDOWNAME) != True:
+    if WINDOW.get_open() != True:
         break
 
     TimeToSleep = 1/FPS - (time.time() - Start)

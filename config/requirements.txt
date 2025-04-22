@@ -1,6 +1,6 @@
 beautifulsoup4
 opencv-python
-SimpleWindow<1.0
+SimpleWindow>=1.0
 torchvision==0.20.1
 torchaudio==2.5.1
 keyboard

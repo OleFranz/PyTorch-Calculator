@@ -42,6 +42,8 @@ def GetTextSize(Text="NONE", TextWidth=100, Fontsize=11):
 
 
 def Initialize():
+    global WindowDev
+    global WindowDetection
     global Identifier
     global Rules
     global MaxLinesToCompareToAtOnce
@@ -54,20 +56,19 @@ def Initialize():
     global CleanFrame
 
     if variables.DevelopmentMode:
-        SimpleWindow.Initialize(Name="PyTorch-Calculator (Dev Mode)",
-                                Size=(400, 400),
-                                Position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY + 430 + 5),
-                                Resizable=False,
-                                TopMost=False,
-                                Undestroyable=False,
-                                Icon=f"{variables.Path}app/assets/icon_dark.ico")
+        WindowDev = SimpleWindow.Window(name="PyTorch-Calculator (Dev Mode)",
+                                        size=(400, 400),
+                                        position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY + 430 + 5),
+                                        title_bar_color=(0, 0, 0),
+                                        resizable=False,
+                                        icon=f"{variables.Path}app/assets/icon_dark.ico")
 
-    SimpleWindow.Initialize(Name="PyTorch-Calculator Detection",
-                            Size=(400, 400), Position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY),
-                            Resizable=False,
-                            TopMost=False,
-                            Undestroyable=False,
-                            Icon=f"{variables.Path}app/assets/icon_dark.ico")
+    WindowDetection = SimpleWindow.Window(name="PyTorch-Calculator Detection",
+                                         size=(400, 400),
+                                         position=(variables.WindowX + variables.WindowWidth + 5, variables.WindowY),
+                                         title_bar_color=(0, 0, 0),
+                                         resizable=False,
+                                         icon=f"{variables.Path}app/assets/icon_dark.ico")
 
     Identifier = pytorch.Initialize(Owner="OleFranz", Model="PyTorch-Calculator", Folder="model")
     pytorch.Load(Identifier)
@@ -468,7 +469,7 @@ def Update():
                 CrashReport("Analyze - Error in function Update.", str(traceback.format_exc()))
         threading.Thread(target=UpdateThread, daemon=True).start()
         if variables.DevelopmentMode:
-            SimpleWindow.Show("PyTorch-Calculator (Dev Mode)", Frame)
-        SimpleWindow.Show("PyTorch-Calculator Detection", CleanFrame)
+            WindowDev.show(Frame)
+        WindowDetection.show(CleanFrame)
     except:
         CrashReport("Analyze - Error in function Update.", str(traceback.format_exc()))

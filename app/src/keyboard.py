@@ -1,7 +1,6 @@
 from src.crashreport import CrashReport
 import src.variables as variables
 
-import SimpleWindow
 import threading
 import traceback
 import ctypes
@@ -19,7 +18,7 @@ def Run():
                 while variables.Break == False:
                     Start = time.time()
 
-                    if SimpleWindow.GetForeground(variables.Name) == False or variables.Page != "Canvas":
+                    if variables.Window.get_foreground() == False or variables.Page != "Canvas":
                         time.sleep(0.1)
                         continue
 

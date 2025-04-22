@@ -3,7 +3,6 @@ import src.variables as variables
 import src.settings as settings
 import src.ui as ui
 
-import SimpleWindow
 import threading
 import traceback
 import win32con
@@ -29,8 +28,8 @@ def MovePathPopup(Title=""):
                 while True:
                     HWND = win32gui.FindWindow(None, Title)
                     if HWND != 0:
-                        X, Y = SimpleWindow.GetPosition(variables.Name)
-                        WIDTH, HEIGHT = SimpleWindow.GetSize(variables.Name)
+                        X, Y = variables.Window.get_position()
+                        WIDTH, HEIGHT = variables.Window.get_size()
                         win32gui.MoveWindow(HWND, X, Y, WIDTH, HEIGHT, True)
                         win32gui.SetWindowPos(HWND, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
                         win32gui.SetWindowLong(HWND, win32con.GWL_EXSTYLE, win32gui.GetWindowLong(HWND, win32con.GWL_EXSTYLE))
@@ -44,8 +43,8 @@ def MovePathPopup(Title=""):
                 HeightOffset = HEIGHT - (BottomRight[1] - TopLeft[1]) - 32
                 while True:
                     Start = time.time()
-                    X, Y = SimpleWindow.GetPosition(variables.Name)
-                    WIDTH, HEIGHT = SimpleWindow.SimpleWindow.GetSize(variables.Name)
+                    X, Y = variables.Window.get_position()
+                    WIDTH, HEIGHT = variables.Window.get_size()
                     if win32gui.FindWindow(None, Title) == 0:
                         break
                     RECT = win32gui.GetClientRect(HWND)
